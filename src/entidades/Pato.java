@@ -2,9 +2,20 @@ package entidades;
 
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Rectangle;
 import javax.imageio.ImageIO;
 
 public class Pato extends Animal {
+
+    //  TIPOS DE PATO
+    public enum TipoPato {
+        NORMAL,
+        INOCENTE,
+        RARO,
+        FALSO_RARO
+    }
+
+    private TipoPato tipo;
 
     private enum Estado {
         VOANDO, MORTO, CAINDO
@@ -26,7 +37,7 @@ public class Pato extends Animal {
     private final int TROCA_FRAME_QUEDA = 6;
     private final int GRAVIDADE = 1;
 
-    // movimento curvo
+    // movimento
     private double angulo = 0;
     private double velocidadeAngular;
     private int yBase;
@@ -42,14 +53,18 @@ public class Pato extends Animal {
     private boolean deveSairDireita;
     private boolean entrouNaTela = false;
 
-    public Pato(int x, int y, boolean vemDaEsquerda) {
+    public Pato(int x, int y, boolean vemDaEsquerda, TipoPato tipo) {
         super(x, y);
+
+        this.tipo = tipo;
 
         this.yBase = y;
         this.amplitude = 20 + (int) (Math.random() * 20);
         this.velocidadeAngular = 0.05 + Math.random() * 0.05;
 
-        this.arisco = Math.random() < 0.3;
+        // raros são mais ariscos
+        this.arisco = (tipo == TipoPato.RARO || tipo == TipoPato.FALSO_RARO)
+                || Math.random() < 0.3;
 
         this.indoParaDireita = vemDaEsquerda;
         this.deveSairDireita = vemDaEsquerda;
@@ -57,17 +72,35 @@ public class Pato extends Animal {
         carregarImagens(vemDaEsquerda);
     }
 
+    //  define os danos da fuga
+    public boolean contaFuga() {
+        return tipo != TipoPato.INOCENTE;
+    }
+
+    public TipoPato getTipo() {
+        return tipo;
+    }
+
     private void carregarImagens(boolean vemDaEsquerda) {
         try {
             voo = new Image[2];
             queda = new Image[4];
 
+            String prefixo;
+
+            switch (tipo) {
+                case INOCENTE -> prefixo = "duckInocent";
+                case RARO -> prefixo = "duckGolden";
+                case FALSO_RARO -> prefixo = "duckFalse";
+                default -> prefixo = "duck";
+            }
+
             if (vemDaEsquerda) {
-                voo[0] = ImageIO.read(getClass().getResource("/imagens/duckRight0.png"));
-                voo[1] = ImageIO.read(getClass().getResource("/imagens/duckRight1.png"));
+                voo[0] = ImageIO.read(getClass().getResource("/imagens/" + prefixo + "Right0.png"));
+                voo[1] = ImageIO.read(getClass().getResource("/imagens/" + prefixo + "Right1.png"));
             } else {
-                voo[0] = ImageIO.read(getClass().getResource("/imagens/duckLeft0.png"));
-                voo[1] = ImageIO.read(getClass().getResource("/imagens/duckLeft1.png"));
+                voo[0] = ImageIO.read(getClass().getResource("/imagens/" + prefixo + "Left0.png"));
+                voo[1] = ImageIO.read(getClass().getResource("/imagens/" + prefixo + "Left1.png"));
             }
 
             queda[0] = ImageIO.read(getClass().getResource("/imagens/duckPrecipitate0.png"));
@@ -113,14 +146,9 @@ public class Pato extends Animal {
             if (dy > 0) yBase += 2;
             else yBase -= 2;
 
-            if (yBase < LIMITE_SUPERIOR) {
-                yBase = LIMITE_SUPERIOR;
-                angulo += Math.PI / 2;
-            }
-
-            if (yBase + altura > LIMITE_INFERIOR) {
+            if (yBase < LIMITE_SUPERIOR) yBase = LIMITE_SUPERIOR;
+            if (yBase + altura > LIMITE_INFERIOR)
                 yBase = LIMITE_INFERIOR - altura;
-            }
 
             angulo += 0.15;
         }
@@ -136,13 +164,10 @@ public class Pato extends Animal {
     public void atualizar() {
 
         switch (estado) {
-
-            case VOANDO:
+            case VOANDO -> {
                 x += vx;
 
-                if (x > 0 && x + largura < 800) {
-                    entrouNaTela = true;
-                }
+                if (x > 0 && x + largura < 800) entrouNaTela = true;
 
                 if (entrouNaTela) {
                     if (x < 0 && deveSairDireita) inverterDirecao();
@@ -152,24 +177,19 @@ public class Pato extends Animal {
                 angulo += velocidadeAngular;
                 y = yBase + (int) (Math.sin(angulo) * amplitude);
 
-                if (y + altura > LIMITE_INFERIOR) {
-                    y = LIMITE_INFERIOR - altura;
-                    yBase = y;
-                }
-
                 animarVoo();
-                break;
+            }
 
-            case MORTO:
+            case MORTO -> {
                 estado = Estado.CAINDO;
                 vy = 2;
-                break;
+            }
 
-            case CAINDO:
+            case CAINDO -> {
                 y += vy;
                 vy += GRAVIDADE;
                 animarQueda();
-                break;
+            }
         }
     }
 
@@ -184,10 +204,7 @@ public class Pato extends Animal {
     private void animarQueda() {
         contadorQueda++;
         if (contadorQueda >= TROCA_FRAME_QUEDA) {
-            frameQueda++;
-            if (frameQueda >= queda.length) {
-                frameQueda = queda.length - 1;
-            }
+            frameQueda = Math.min(frameQueda + 1, queda.length - 1);
             contadorQueda = 0;
         }
     }
@@ -207,5 +224,9 @@ public class Pato extends Animal {
         } else {
             g.drawImage(queda[frameQueda], x, y, largura, altura, null);
         }
+    }
+
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, largura, altura);
     }
 }

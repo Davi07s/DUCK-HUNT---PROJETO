@@ -13,6 +13,9 @@ public abstract class Animal {
     protected int vx;
     protected int vy;
 
+    // Controla a intensidade do movimento senoidal
+    protected double intensidadeZigZag = 0;
+
     public Animal(int x, int y) {
         this.x = x;
         this.y = y;
@@ -30,6 +33,7 @@ public abstract class Animal {
     public abstract void desenhar(Graphics g);
 
 
+
     public int getX() {
         return x;
     }
@@ -38,12 +42,19 @@ public abstract class Animal {
         return y;
     }
 
-
     public void setVelocidadeX(int vx) {
         this.vx = vx;
     }
 
     public void setVelocidadeY(int vy) {
         this.vy = vy;
+    }
+
+    /**
+     * Define a intensidade do zigue-zague (oscilação vertical).
+     * @param intensidade Valor que aumenta a cada round no GamePanel.
+     */
+    public void setDificuldade(double intensidade) {
+        this.intensidadeZigZag = intensidade;
     }
 }
