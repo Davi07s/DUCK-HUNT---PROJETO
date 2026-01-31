@@ -34,7 +34,6 @@ public class GamePanel extends JPanel {
     private int pontuacao = 0;
     private int patosFugidos = 0;
 
-    //  Dificuldades
     private int velocidadeBase = 4;
     private double intensidadeZigZag = 0;
 
@@ -54,7 +53,7 @@ public class GamePanel extends JPanel {
     private int mouseX, mouseY;
     private BarraTolerancia barraTolerancia;
     private long ultimoSpawn = 0;
-    private final int DELAY_SPAWN = 800;
+    private int delaySpawnAtual = 600;
 
     private List<TextoFlutuante> textos = new ArrayList<>();
     private entidades.Cachorro dog;
@@ -100,9 +99,43 @@ public class GamePanel extends JPanel {
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_R) recarregarMunicao();
+                // Recarga normal se não for game over
+                if (!gameOver && e.getKeyCode() == KeyEvent.VK_R && municao == 0) {
+                    recarregarMunicao();
+                }
+                // Reiniciar se for game over
+                if (gameOver && (e.getKeyCode() == KeyEvent.VK_R || e.getKeyCode() == KeyEvent.VK_ENTER)) {
+                    reiniciarJogo();
+                }
             }
         });
+    }
+
+    private void reiniciarJogo() {
+        // Reseta atributos para o estado inicial
+        pontuacao = 0;
+        patosFugidos = 0;
+        roundAtual = 1;
+        velocidadeBase = 4;
+        intensidadeZigZag = 0;
+        delaySpawnAtual = 600;
+        PATOS_MIN = 4;
+        municao = MAX_MUNICAO;
+        gameOver = false;
+
+        // Limpa listas
+        animais.clear();
+        textos.clear();
+
+        // Reseta cachorro e barra
+        barraTolerancia.setValor(0);
+        dog = new entidades.Cachorro(-100, 380);
+        dog.iniciarIntroducao();
+
+        // Reinicia áudio e timer
+        Musica.pararMusicaFundo();
+        Musica.tocarLoop("intro");
+        timer.start();
     }
 
     private void processarDisparo(Point pontoClique) {
@@ -151,22 +184,18 @@ public class GamePanel extends JPanel {
             exibindoRound = true;
             tempoInicioRoundMsg = System.currentTimeMillis();
 
-            // Escalonamento de dificuldade
             velocidadeBase += 2;
             intensidadeZigZag += 1.5;
-
-            if (roundAtual % 2 == 0) PATOS_MIN++;
+            delaySpawnAtual = Math.max(250, delaySpawnAtual - 50);
+            PATOS_MIN++;
         }
     }
 
     private void gerarPatos(int quantidade) {
         for (int i = 0; i < quantidade; i++) {
             boolean vemDaEsquerda = random.nextBoolean();
-            int x, vx, y, tentativas = 0;
-            do {
-                y = random.nextInt(ALTURA_SOLO - 120) + 20;
-                tentativas++;
-            } while (colideVerticalmente(y) && tentativas < 10);
+            int x, vx, y;
+            y = random.nextInt(ALTURA_SOLO - 120) + 20;
 
             if (vemDaEsquerda) {
                 x = -MARGEM;
@@ -177,20 +206,17 @@ public class GamePanel extends JPanel {
             }
 
             Pato p = new Pato(x, y, vemDaEsquerda, sortearTipoPato());
-
-            // métodos
             p.setVelocidadeX(vx);
             p.setDificuldade(intensidadeZigZag);
-
             animais.add(p);
         }
     }
 
     private TipoPato sortearTipoPato() {
         int r = random.nextInt(100);
-        if (r < 5) return TipoPato.RARO;
-        if (r < 20) return TipoPato.FALSO_RARO;
-        if (r < 35) return TipoPato.INOCENTE;
+        if (r < 10) return TipoPato.RARO;
+        if (r < 35) return TipoPato.FALSO_RARO;
+        if (r < 50) return TipoPato.INOCENTE;
         return TipoPato.NORMAL;
     }
 
@@ -205,43 +231,45 @@ public class GamePanel extends JPanel {
 
             if (a instanceof Pato p) {
                 p.fugirDoCursor(mouseX, mouseY);
+
                 if (p.estaMorto() && p.queda(ALTURA_SOLO)) {
                     if (p.getTipo() == TipoPato.FALSO_RARO) dog.rir(p.getX());
                     else if (p.getTipo() != TipoPato.INOCENTE) dog.celebrar(p.getX());
                     it.remove();
-                    recarregarMunicao();
                     continue;
                 }
-            }
 
-            if (a.getX() < -MARGEM || a.getX() > LARGURA + MARGEM) {
-                if (a instanceof Pato p) {
+                if (p.getY() < -MARGEM) {
                     if (p.contaFuga() && p.getTipo() != TipoPato.FALSO_RARO) {
                         patosFugidos++;
                         dog.rir(p.getX());
                     }
-                }
-                it.remove();
-                recarregarMunicao();
-
-                if (patosFugidos >= LIMITE_FUGAS) {
-                    finalizarJogo();
-                    return;
+                    it.remove();
+                    continue;
                 }
             }
+        }
+
+        if (municao == 0 && animais.isEmpty()) {
+            recarregarMunicao();
         }
 
         textos.removeIf(t -> { t.atualizar(); return t.terminou(); });
 
         long agora = System.currentTimeMillis();
-        if (animais.size() < PATOS_MIN && !gameOver && agora - ultimoSpawn > DELAY_SPAWN) {
-            gerarPatos(1);
+        if (animais.size() < PATOS_MIN && !gameOver && agora - ultimoSpawn > delaySpawnAtual) {
+            int qtd = (roundAtual > 3 && random.nextBoolean()) ? 2 : 1;
+            gerarPatos(qtd);
             ultimoSpawn = agora;
         }
 
         barraTolerancia.setValor(patosFugidos);
         barraTolerancia.atualizar();
         if (exibindoRound && agora - tempoInicioRoundMsg > TEMPO_MSG_ROUND) exibindoRound = false;
+
+        if (patosFugidos >= LIMITE_FUGAS) {
+            finalizarJogo();
+        }
     }
 
     private void finalizarJogo() {
@@ -277,11 +305,6 @@ public class GamePanel extends JPanel {
         setCursor(cursorInvisivel);
     }
 
-    private boolean colideVerticalmente(int yNovo) {
-        for (Animal a : animais) if (Math.abs(a.getY() - yNovo) < 50) return true;
-        return false;
-    }
-
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -298,10 +321,32 @@ public class GamePanel extends JPanel {
 
         desenharHUD(g);
 
-        if (gameOver && gameOverImg != null) {
-            g.drawImage(gameOverImg, (LARGURA - gameOverImg.getWidth(null)) / 2, (ALTURA - gameOverImg.getHeight(null)) / 2, null);
-        }
-        if (!gameOver) {
+        if (gameOver) {
+            if (gameOverImg != null) {
+                // Desenha a imagem de Game Over centralizada
+                int gx = (LARGURA - gameOverImg.getWidth(null)) / 2;
+                int gy = (ALTURA - gameOverImg.getHeight(null)) / 2 - 50;
+                g.drawImage(gameOverImg, gx, gy, null);
+
+                // Configura fonte para mensagens finais
+                g.setFont(new Font("Consolas", Font.BOLD, 28));
+                FontMetrics fm = g.getFontMetrics();
+
+                // Mensagem de Parabéns e Pontuação
+                String parabens = "PARABÉNS!";
+                String pontosStr = "PONTUAÇÃO FINAL: " + pontuacao;
+                String resetStr = "Pressione [R] para reiniciar";
+
+                g.setColor(Color.WHITE);
+                g.drawString(parabens, (LARGURA - fm.stringWidth(parabens)) / 2, gy + gameOverImg.getHeight(null) + 40);
+
+                g.setColor(Color.WHITE);
+                g.drawString(pontosStr, (LARGURA - fm.stringWidth(pontosStr)) / 2, gy + gameOverImg.getHeight(null) + 80);
+
+                g.setFont(new Font("Consolas", Font.ITALIC, 18));
+                g.drawString(resetStr, (LARGURA - g.getFontMetrics().stringWidth(resetStr)) / 2, gy + gameOverImg.getHeight(null) + 120);
+            }
+        } else {
             g.drawImage(mira, mouseX - mira.getWidth(null) / 2, mouseY - mira.getHeight(null) / 2, null);
         }
     }

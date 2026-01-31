@@ -73,7 +73,7 @@ public class MenuPanel extends JPanel {
         switch (opcaoSelecionada) {
             case 0 -> ySeta = 165;
             case 1 -> ySeta = 255;
-            case 2 -> ySeta = 345;
+            case 2 -> ySeta = 344;
         }
 
         // Seta indicativa

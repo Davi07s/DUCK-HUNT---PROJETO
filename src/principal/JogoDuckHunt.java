@@ -23,7 +23,7 @@ public class JogoDuckHunt {
 
 
     private void exibirMenu() {
-        // função (Runnable) que será executada quando o botão PLAY for clicado
+        // funçãox para executar quando o botão PLAY for clicado
         MenuPanel menu = new MenuPanel(this::iniciarJogo);
         janela.setContentPane(menu);
         janela.revalidate();
@@ -43,7 +43,6 @@ public class JogoDuckHunt {
     }
 
     public static void main(String[] args) {
-        // inicicia o swing na thread
-        SwingUtilities.invokeLater(JogoDuckHunt::new);
+        SwingUtilities.invokeLater(JogoDuckHunt::new); //inicia o swing na trhead
     }
 }
