@@ -10,17 +10,34 @@ import java.io.IOException;
 public class MenuPanel extends JPanel {
     private Image background;
     private Runnable onStartGame;
+    private Runnable onShowRanking;
+    private Runnable onShowInstructions;
+    private JFrame frame;
 
     private int opcaoSelecionada = 0;
 
-    public MenuPanel(Runnable onStartGame) {
+    public MenuPanel(JFrame frame, Runnable onStartGame, Runnable onShowRanking) {
+        this.frame = frame;
         this.onStartGame = onStartGame;
+        this.onShowRanking = onShowRanking;
+
+        this.onShowInstructions = () -> {
+            InstructionPanel instrucoes = new InstructionPanel(frame, this);
+
+            // Troca o painel de conteúdo da janela pelo de instruções
+            frame.setContentPane(instrucoes);
+            frame.revalidate();
+            frame.repaint();
+
+
+            instrucoes.requestFocusInWindow();
+        };
+
         setPreferredSize(new Dimension(800, 600));
         setFocusable(true);
 
         try {
-
-            background = ImageIO.read(getClass().getResource("/imagens/menuPanelBackground.png"));
+            background = ImageIO.read(getClass().getResource("/imagens/menuPanel.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -31,10 +48,10 @@ public class MenuPanel extends JPanel {
                 int key = e.getKeyCode();
 
                 if (key == KeyEvent.VK_UP) {
-                    opcaoSelecionada = (opcaoSelecionada == 0) ? 2 : opcaoSelecionada - 1;
+                    opcaoSelecionada = (opcaoSelecionada == 0) ? 3 : opcaoSelecionada - 1;
                 }
                 else if (key == KeyEvent.VK_DOWN) {
-                    opcaoSelecionada = (opcaoSelecionada == 2) ? 0 : opcaoSelecionada + 1;
+                    opcaoSelecionada = (opcaoSelecionada == 3) ? 0 : opcaoSelecionada + 1;
                 }
                 else if (key == KeyEvent.VK_ENTER) {
                     executarAcao();
@@ -45,12 +62,11 @@ public class MenuPanel extends JPanel {
     }
 
     private void executarAcao() {
-        if (opcaoSelecionada == 0) {
-            onStartGame.run();
-        } else if (opcaoSelecionada == 1) {
-            JOptionPane.showMessageDialog(this, "Use as setas para navegar e Enter para selecionar.");
-        } else if (opcaoSelecionada == 2) {
-            System.exit(0);
+        switch (opcaoSelecionada) {
+            case 0 -> onStartGame.run();
+            case 1 -> onShowInstructions.run();
+            case 2 -> onShowRanking.run();
+            case 3 -> System.exit(0);
         }
     }
 
@@ -65,18 +81,16 @@ public class MenuPanel extends JPanel {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setColor(Color.WHITE);
 
-        // aproxima a seta do texto centralizado
-        int xSetaBase = 350;
+        int xSetaBase = 300;
         int ySeta = 0;
 
-        // Mapeamento dos valores para posicionamento da seta
         switch (opcaoSelecionada) {
-            case 0 -> ySeta = 165;
-            case 1 -> ySeta = 255;
-            case 2 -> ySeta = 344;
+            case 0 -> ySeta = 85;
+            case 1 -> ySeta = 150;
+            case 2 -> ySeta = 210;
+            case 3 -> ySeta = 270;
         }
 
-        // Seta indicativa
         int[] xPontos = {xSetaBase, xSetaBase, xSetaBase + 15};
         int[] yPontos = {ySeta - 10, ySeta + 10, ySeta};
         g2.fillPolygon(xPontos, yPontos, 3);

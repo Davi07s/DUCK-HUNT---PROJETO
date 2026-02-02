@@ -4,6 +4,7 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import jogo.GamePanel;
 import jogo.MenuPanel;
+import jogo.RankingPanel;
 
 public class JogoDuckHunt {
 
@@ -21,28 +22,40 @@ public class JogoDuckHunt {
         janela.setVisible(true);
     }
 
+    public void exibirMenu() {
 
-    private void exibirMenu() {
-        // funçãox para executar quando o botão PLAY for clicado
-        MenuPanel menu = new MenuPanel(this::iniciarJogo);
+        MenuPanel menu = new MenuPanel(janela, this::iniciarJogo, this::exibirRanking);
+
         janela.setContentPane(menu);
         janela.revalidate();
+        janela.repaint(); //atualização visual
+        menu.requestFocusInWindow();
     }
 
-    // remoção do menu e iniciação do GamePanel
+
     private void iniciarJogo() {
         GamePanel gamePanel = new GamePanel();
         janela.setContentPane(gamePanel);
         janela.revalidate();
 
-        //GamePanel recebe o foco para detectar o mouse e teclado
+        //foco para detectar mouse e teclado
         gamePanel.requestFocusInWindow();
 
-        // Ajusta o tamanho da janela para se adequar ao menu
+        // Ajusta o tamanho da janela
+        janela.pack();
+    }
+
+
+    private void exibirRanking() {
+        RankingPanel ranking = new RankingPanel(this);
+        janela.setContentPane(ranking);
+        janela.revalidate();
+
+        ranking.requestFocusInWindow();
         janela.pack();
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(JogoDuckHunt::new); //inicia o swing na trhead
+        SwingUtilities.invokeLater(JogoDuckHunt::new);
     }
 }
