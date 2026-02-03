@@ -28,9 +28,11 @@ public abstract class Pato extends Animal {
         carregarImagens(vemDaEsquerda);
     }
 
-    // Métodos que as subclasses devem implementar
+    // MÉTODOS ABSTRATOS PARA POLIMORFISMO
     public abstract void aoSerAtingido(jogo.GamePanel gp);
     public abstract boolean contaFuga();
+    public abstract void reagirAoCair(Cachorro dog);
+    public abstract void reagirAoFugir(Cachorro dog);
     protected abstract String getPrefixoImagem();
 
     protected void carregarImagens(boolean vemDaEsquerda) {
@@ -54,11 +56,9 @@ public abstract class Pato extends Animal {
                 if (fugindoParaSempre) yBase -= 4;
                 if (!entrouNaTela && x > 0 && x + largura < 800) entrouNaTela = true;
                 if (entrouNaTela && (x < 0 || x + largura > 800)) inverterDirecao();
-
                 double amplitudeAtual = amplitude + (intensidadeZigZag * 5);
                 angulo += velocidadeAngular + (intensidadeZigZag * 0.01);
                 y = yBase + (int) (Math.sin(angulo) * amplitudeAtual);
-
                 if (!fugindoParaSempre) {
                     if (y < 20) y = 20;
                     if (y > LIMITE_INFERIOR) y = LIMITE_INFERIOR;
@@ -88,14 +88,8 @@ public abstract class Pato extends Animal {
         }
     }
 
-    private void animarVoo() {
-        if (++contadorFrames >= TROCA_FRAME) { frameAtual = (frameAtual + 1) % voo.length; contadorFrames = 0; }
-    }
-
-    private void animarQueda() {
-        if (++contadorQueda >= TROCA_FRAME_QUEDA) { frameQueda = Math.min(frameQueda + 1, queda.length - 1); contadorQueda = 0; }
-    }
-
+    private void animarVoo() { if (++contadorFrames >= TROCA_FRAME) { frameAtual = (frameAtual + 1) % voo.length; contadorFrames = 0; } }
+    private void animarQueda() { if (++contadorQueda >= TROCA_FRAME_QUEDA) { frameQueda = Math.min(frameQueda + 1, queda.length - 1); contadorQueda = 0; } }
     public void morrer() { if (estado == Estado.VOANDO) { estado = Estado.MORTO; vx = 0; } }
     public boolean estaMorto() { return estado != Estado.VOANDO; }
     public boolean queda(int ySolo) { return y + altura >= ySolo; }

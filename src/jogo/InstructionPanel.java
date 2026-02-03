@@ -13,7 +13,7 @@ public class InstructionPanel extends JPanel {
     private JFrame frame;
     private JPanel menuPrincipal;
 
-    // Imagens das sprites
+    // sprites
     private Image imgComum, imgRaro, imgFalsoRaro, imgInocente;
 
     public InstructionPanel(JFrame frame, JPanel menuPrincipal) {
@@ -52,7 +52,7 @@ public class InstructionPanel extends JPanel {
         frame.revalidate();
         frame.repaint();
 
-        // Uso do invokeLater para garantir que o foco seja processado após a montagem da tela
+        // invokeLater
         SwingUtilities.invokeLater(() -> {
             menuPrincipal.requestFocusInWindow();
         });
@@ -108,15 +108,15 @@ public class InstructionPanel extends JPanel {
             g2.setColor(new Color(255, 255, 255, 60));
             g2.fillRoundRect(cx, y, 130, 130, 20, 20);
 
-            // Desenha a Sprite do Pato centralizada na moldura
+            //sprite do pato na moldura
             Image spritePato = (Image) dados[i][2];
             if (spritePato != null) {
-                // Ajusta o tamanho da sprite para caber na moldura
+                // Ajusta o tamanho da sprite
                 g2.drawImage(spritePato, cx + 25, y + 15, 80, 80, null);
             }
 
             g2.setColor(Color.WHITE);
-            g2.setFont(new Font("Arial", Font.BOLD, 18));
+            g2.setFont(new Font("Arial", Font.BOLD, 16));
             g2.drawString((String) dados[i][0], cx + 25, y + 110);
 
             g2.setColor(Color.YELLOW);

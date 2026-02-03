@@ -21,15 +21,14 @@ public class MenuPanel extends JPanel {
         this.onStartGame = onStartGame;
         this.onShowRanking = onShowRanking;
 
+
+        Musica.tocarLoop("menu");
+
         this.onShowInstructions = () -> {
             InstructionPanel instrucoes = new InstructionPanel(frame, this);
-
-            // Troca o painel de conteúdo da janela pelo de instruções
             frame.setContentPane(instrucoes);
             frame.revalidate();
             frame.repaint();
-
-
             instrucoes.requestFocusInWindow();
         };
 
@@ -63,7 +62,11 @@ public class MenuPanel extends JPanel {
 
     private void executarAcao() {
         switch (opcaoSelecionada) {
-            case 0 -> onStartGame.run();
+            case 0 -> {
+                // finaliza a musica do menu
+                Musica.pararMusicaFundo();
+                onStartGame.run();
+            }
             case 1 -> onShowInstructions.run();
             case 2 -> onShowRanking.run();
             case 3 -> System.exit(0);
